@@ -4,11 +4,9 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
 
-# Set email and password
 email = ' '
 password = ' '
 
-# Configure Selenium webdriver
 driver = webdriver.Chrome()
 driver.get('https://accounts.surrey.ca/auth.aspx?action=login&s=e30=&return_url=https%3A%2F%2Faccounts.surrey.ca%2Fprofile.aspx%3Faction%3Dlogin%26s%3De30%3D%26language%3D')
 
@@ -37,22 +35,16 @@ driver.get('https://www.surrey.ca/parks-recreation/activities-registration/searc
 # Find all dropdowns
 dropdowns = driver.find_elements(By.CSS_SELECTOR, 'details.dropins-date')
 
-# Iterate over dropdowns
-
-# Iterate over dropdowns
 for dropdown in dropdowns:
 
     if 'Sunday' in dropdown.text:
-        # Expand the dropdown
+
         dropdown_summary = dropdown.find_element(By.CSS_SELECTOR, 'summary.dropins-date-header')
         dropdown_summary.click()
 
         current_window = driver.window_handles[0]
-        # Find the button and click it within the expanded dropdown
         join_button = dropdown.find_element(By.XPATH, './/a[@class="button button--pm-alt external-link"]')
         join_button.click()
-
-        # 替换 time.sleep(4) 为显式等待
         wait = WebDriverWait(driver, 10)
         # 获取所有窗口句柄``
         handles = driver.window_handles
