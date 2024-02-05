@@ -6,6 +6,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
 import json
+from datetime import datetime, timedelta
 
 class SeleniumUI:
     def __init__(self, root):
@@ -56,9 +57,13 @@ class SeleniumUI:
         self.scheduled_label = tk.Label(content_frame, text="")
         self.scheduled_label.grid(row=9, column=0, columnspan=2, pady=5)
 
+        # Initialize remaining time variable and label
+        self.remaining_time_var = tk.StringVar()
+        self.remaining_time_label = tk.Label(content_frame, textvariable=self.remaining_time_var, font=("Helvetica", 10, "bold"), fg="black")
 
         start_button = tk.Button(content_frame, text="Start", command=self.start_selenium_script)
         start_button.grid(row=10, column=0, columnspan=2, pady=20)  # Adjusted the row to 10
+        self.start_button = start_button  # Store a reference to the START button
 
         root.protocol("WM_DELETE_WINDOW", self.on_close)
 
@@ -73,8 +78,15 @@ class SeleniumUI:
         if self.scheduled_var.get():
             scheduled_text = self.get_scheduled_text()
             self.scheduled_label.config(text=scheduled_text)
+            self.start_button.config(state=tk.NORMAL)  # Enable START button
+            if self.remaining_time_var.get():  # Check if there is remaining time text
+                self.remaining_time_label.grid(row=11, column=0, columnspan=2, pady=5)  # Show remaining time label
+                self.start_button.config(state=tk.DISABLED)  # Disable START button until countdown is finished
+                self.update_countdown()  # Start the countdown
         else:
             self.scheduled_label.config(text="")
+            self.remaining_time_label.grid_forget()  # Hide remaining time label
+            self.start_button.config(state=tk.NORMAL)  # Enable START button
 
     def get_scheduled_text(self):
         selected_day = self.day_combobox.get()
@@ -160,7 +172,6 @@ class SeleniumUI:
 
                 break
 
-
         if self.remember_info_var.get():
             self.save_settings_to_cache()
 
@@ -180,10 +191,12 @@ class SeleniumUI:
                 if self.selected_day:
                     self.day_combobox.set(self.selected_day)
 
-                # 添加加载scheduled信息
+                # Add loading scheduled information
                 self.scheduled_var.set(data.get('scheduled', False))
                 self.update_scheduled_label()
 
+                # Add loading remaining time information
+                self.remaining_time_var.set(data.get('remaining_time', ''))
         except FileNotFoundError:
             pass  # File doesn't exist, ignore
 
@@ -194,7 +207,8 @@ class SeleniumUI:
             'stay_signed_in': self.stay_signed_in_var.get(),
             'remember_info': self.remember_info_var.get(),
             'selected_day': self.selected_day,
-            'scheduled': self.scheduled_var.get()  # 保存scheduled信息
+            'scheduled': self.scheduled_var.get(),  # Save scheduled information
+            'remaining_time': self.remaining_time_var.get()  # Save remaining time information
         }
         with open('settings_cache.json', 'w') as file:
             json.dump(data, file)
@@ -204,6 +218,35 @@ class SeleniumUI:
         self.save_settings_to_cache()
         # Do other cleanup tasks as needed
         self.root.destroy()
+
+    # Add the following two functions to handle countdown
+    def update_countdown(self):
+        remaining_time = self.calculate_remaining_time()
+        if remaining_time.total_seconds() > 0:
+            self.remaining_time_var.set(str(remaining_time))
+            self.root.after(1000, self.update_countdown)
+        else:
+            self.remaining_time_var.set("")  # Countdown finished, hide the text
+            self.start_selenium_script()
+
+    def calculate_remaining_time(self):
+        scheduled_datetime = self.get_scheduled_datetime()
+        current_datetime = datetime.now()
+        remaining_time = scheduled_datetime - current_datetime
+        return remaining_time
+
+    def get_scheduled_datetime(self):
+        selected_day = self.day_combobox.get()
+        if selected_day == "Tuesday":
+            scheduled_time = datetime.strptime("17:30:00", "%H:%M:%S")
+        elif selected_day == "Friday":
+            scheduled_time = datetime.strptime("19:15:00", "%H:%M:%S")
+        elif selected_day == "Sunday":
+            scheduled_time = datetime.strptime("08:15:00", "%H:%M:%S")
+        else:
+            # Default to today's date and time
+            scheduled_time = datetime.now().replace(second=0, microsecond=0)
+        return scheduled_time
 
 if __name__ == "__main__":
     root = tk.Tk()
