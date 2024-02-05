@@ -17,9 +17,9 @@ REC AUTO does not steal information in any way. Your private information will be
 
 ## LOG
 
-- 2024-02-04
+#### 2024-02-04 Dev. Version 0.1.0
 - Added timer function
 - Optimize known issues
 
-- 2024-02-03
+#### 2024-02-03 Dev. Version 0.0.1-alpha
 - **The first pre-release version is already available.**
